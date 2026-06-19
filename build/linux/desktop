@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=Skill Manager POC
+Comment=Build/distribution feasibility POC for Wails v3 + Go + React
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/skill_manager_poc %u
+Terminal=false
+Type=Application
+Icon=skill_manager_poc
+Categories=Utility;
+StartupWMClass=skill_manager_poc
+
+ 

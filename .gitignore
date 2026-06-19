@@ -8,6 +8,10 @@
 *.so
 *.dylib
 
+#ai
+.agents
+.claude
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -30,3 +34,26 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# --- Wails v3 / frontend build artifacts ---
+.task
+/bin
+/dist
+frontend/node_modules
+# NOTE: frontend/dist is intentionally NOT ignored — it is committed so that
+# `go run github.com/rokasklive/go-poc@<tag>` can resolve //go:embed all:frontend/dist
+# from the module proxy. Rebuild it with `cd frontend && npm run build` before tagging.
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+# Generated Windows resource objects
+*.syso
+# Stray object files (Docker cross-build may leave a root-owned empty `-.o`)
+*.o
+
+# Local-only docs (excluded from the repo per request)
+docs/
+# Mobile generated (per-machine; overlays hold absolute paths)
+build/ios/xcode/overlay.json
+build/ios/xcode/gen/
+build/android/overlay.json
+build/android/gen/

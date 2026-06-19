@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MsixPackagingToolTemplate
+    xmlns="http://schemas.microsoft.com/msix/packaging/msixpackagingtool/template/2022">
+    <Settings
+        AllowTelemetry="false"
+        ApplyACLsToPackageFiles="true"
+        GenerateCommandLineFile="true"
+        AllowPromptForPassword="false">
+    </Settings>
+    <Installer
+        Path="skill_manager_poc"
+        Arguments=""
+        InstallLocation="C:\Program Files\POC\Skill Manager POC">
+    </Installer>
+    <PackageInformation
+        PackageName="Skill Manager POC"
+        PackageDisplayName="Skill Manager POC"
+        PublisherName="CN=POC"
+        PublisherDisplayName="POC"
+        Version="0.1.0.0"
+        PackageDescription="Build/distribution feasibility POC for Wails v3 + Go + React">
+        <Capabilities>
+            <Capability Name="runFullTrust" />
+            
+        </Capabilities>
+        <Applications>
+            <Application
+                Id="com.example.skillmanagerpoc"
+                Description="Build/distribution feasibility POC for Wails v3 + Go + React"
+                DisplayName="Skill Manager POC"
+                ExecutableName="skill_manager_poc"
+                EntryPoint="Windows.FullTrustApplication">
+                
+            </Application>
+        </Applications>
+        <Resources>
+            <Resource Language="en-us" />
+        </Resources>
+        <Dependencies>
+            <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.19041.0" />
+        </Dependencies>
+        <Properties>
+            <Framework>false</Framework>
+            <DisplayName>Skill Manager POC</DisplayName>
+            <PublisherDisplayName>POC</PublisherDisplayName>
+            <Description>Build/distribution feasibility POC for Wails v3 + Go + React</Description>
+            <Logo>Assets\AppIcon.png</Logo>
+        </Properties>
+    </PackageInformation>
+    <SaveLocation PackagePath="skill_manager_poc.msix" />
+    <PackageIntegrity>
+        <CertificatePath></CertificatePath>
+    </PackageIntegrity>
+</MsixPackagingToolTemplate>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=skill-manager-poc
+Exec=skill-manager-poc
+Icon=skill-manager-poc
+Categories=Development;
+Terminal=false
+Keywords=wails
+Version=1.0
+StartupNotify=false
