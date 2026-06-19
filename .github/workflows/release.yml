@@ -36,11 +36,17 @@ jobs:
       # Windows is a pure Go cross-compile (no extra deps).
       # macOS is cross-compiled inside the wails-cross Docker image, which the
       # build script builds on demand (Docker is preinstalled on this runner).
+      # GTK4 (+ webkitgtk-6.0) is required to BUILD the wails3 CLI itself
+      # (internal/operatingsystem uses cgo against gtk4/webkitgtk-6.0). GTK3
+      # (+ webkit2gtk-4.1) is needed for the native Linux app build. Install
+      # both, matching build/docker/Dockerfile.cross.
       - name: Install Linux GUI build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential pkg-config libgtk-3-dev libwebkit2gtk-4.1-dev
+            build-essential pkg-config \
+            libgtk-3-dev libwebkit2gtk-4.1-dev \
+            libgtk-4-dev libwebkitgtk-6.0-dev
 
       - name: Install Wails v3 CLI (pinned)
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha2.104
