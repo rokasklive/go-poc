@@ -122,16 +122,21 @@ build_target "windows/amd64" "${BIN_DIR}/${APP_NAME}.exe" \
   wails3 task windows:build
 
 # ----------------------------------------------------------------------------
-# 5. macOS amd64 + arm64 — Docker (Zig + macOS SDK) cross-compile
-#    Requires the 'wails-cross' image. We build it on demand if missing.
-#
-#    IMPORTANT: OUTPUT must NOT equal the Docker build's intrinsic output name
-#    (bin/<app>-darwin-<arch>), otherwise the task's `mv <src> <OUTPUT>` step
-#    fails with "are the same file". We therefore use a '-macos-' suffix.
+# 5. macOS universal .app — Docker (Zig + macOS SDK) cross-compile + bundle
+#    Builds amd64 + arm64, lipo-joins them into one universal binary, wraps it
+#    in a double-clickable `.app` bundle, and zips it. The bundle + zip are pure
+#    file operations, so this all runs on Linux. We ship a zip because a `.app`
+#    is a directory; zipping (with -y) also preserves the executable bit so
+#    Finder treats it as a launchable app rather than opening it as a document.
+#    Only code SIGNING needs extra tooling/secrets (see README/notes), not this.
+#    Requires the 'wails-cross' image; we build it on demand if missing.
 # ----------------------------------------------------------------------------
+MACOS_APP_DIR="${BIN_DIR}/${APP_NAME}.app"
+MACOS_APP_ZIP="${BIN_DIR}/${APP_NAME}-macos-universal.app.zip"
+
 MACOS_OK=1
 if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
-  echo "Docker is not available/running — skipping macOS cross-builds."
+  echo "Docker is not available/running — skipping macOS packaging."
   echo "macOS cross-compilation from Linux requires Docker (Zig + macOS SDK)."
   MACOS_OK=0
 elif ! docker image inspect wails-cross >/dev/null 2>&1; then
@@ -139,19 +144,37 @@ elif ! docker image inspect wails-cross >/dev/null 2>&1; then
   echo "# 'wails-cross' image not found — building it (one-time, ~minutes / ~1GB)"
   echo "# Equivalent manual command: wails3 task setup:docker"
   if ! wails3 task setup:docker; then
-    echo "Failed to build 'wails-cross' image — skipping macOS cross-builds."
+    echo "Failed to build 'wails-cross' image — skipping macOS packaging."
     MACOS_OK=0
   fi
 fi
+if [[ "${MACOS_OK}" -eq 1 ]] && ! command -v zip >/dev/null 2>&1; then
+  echo "'zip' not found — required to package the macOS .app; skipping macOS."
+  MACOS_OK=0
+fi
 
 if [[ "${MACOS_OK}" -eq 1 ]]; then
-  build_target "darwin/amd64" "${BIN_DIR}/${APP_NAME}-macos-amd64" \
-    wails3 task darwin:build "ARCH=amd64" "OUTPUT=${BIN_DIR}/${APP_NAME}-macos-amd64"
-  build_target "darwin/arm64" "${BIN_DIR}/${APP_NAME}-macos-arm64" \
-    wails3 task darwin:build "ARCH=arm64" "OUTPUT=${BIN_DIR}/${APP_NAME}-macos-arm64"
+  hr
+  echo ">>> Building & packaging: darwin/universal (.app)"
+  rm -rf "${MACOS_APP_DIR}" "${MACOS_APP_ZIP}"
+  if wails3 task darwin:package:universal && [[ -d "${MACOS_APP_DIR}" ]]; then
+    # Zip from inside bin/ so the archive root is "<app>.app" (not "bin/...").
+    ( cd "${BIN_DIR}" && zip -ry -q "$(basename "${MACOS_APP_ZIP}")" "${APP_NAME}.app" )
+    if [[ -e "${MACOS_APP_ZIP}" ]]; then
+      echo ">>> OK: ${MACOS_APP_ZIP}"
+      RESULTS+=("darwin/universal|SUCCESS|${MACOS_APP_ZIP}")
+    else
+      echo ">>> FAILED: darwin/universal (zip step produced no archive)"
+      RESULTS+=("darwin/universal|FAILED|zip produced no archive")
+      OVERALL_EXIT=1
+    fi
+  else
+    echo ">>> FAILED: darwin/universal (.app not produced)"
+    RESULTS+=("darwin/universal|FAILED|${MACOS_APP_DIR}")
+    OVERALL_EXIT=1
+  fi
 else
-  skip_target "darwin/amd64" "Docker unavailable or wails-cross image missing"
-  skip_target "darwin/arm64" "Docker unavailable or wails-cross image missing"
+  skip_target "darwin/universal" "Docker/zip unavailable or wails-cross image missing"
 fi
 
 # ----------------------------------------------------------------------------
@@ -168,8 +191,7 @@ copy_if_exists() {
 }
 copy_if_exists "${BIN_DIR}/${APP_NAME}-linux-amd64"  "${APP_NAME}-linux-amd64"
 copy_if_exists "${BIN_DIR}/${APP_NAME}.exe"          "${APP_NAME}-windows-amd64.exe"
-copy_if_exists "${BIN_DIR}/${APP_NAME}-macos-amd64"  "${APP_NAME}-macos-amd64"
-copy_if_exists "${BIN_DIR}/${APP_NAME}-macos-arm64"  "${APP_NAME}-macos-arm64"
+copy_if_exists "${MACOS_APP_ZIP}"                    "$(basename "${MACOS_APP_ZIP}")"
 
 # ----------------------------------------------------------------------------
 # 7. Summary
